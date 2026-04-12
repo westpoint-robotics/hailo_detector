@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    # Path to the Hailo post-processing configuration file.
+    # This is the only required parameter — the node will not start without it.
+    post_process_file: /usr/share/rpi-camera-assets/hailo_yolov6_inference.json
+
+    # Low-resolution stream dimensions fed to the Hailo inference engine.
+    image_width:  640
+    image_height: 640
+
+    # ROS 2 topic on which Detection2DArray messages are published/subscribed.
+    topic: detections
+
+    # TF coordinate frame written into every message header.
+    frame_id: camera
+
+    # Detections whose confidence is strictly below this value are dropped
+    # before the message is published.  0.0 means publish everything.
+    confidence_threshold: 0.25
+
+    # Set to true to open an rpicam preview window on the detector host.
+    enable_preview: false

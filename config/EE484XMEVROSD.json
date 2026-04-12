@@ -1,0 +1,61 @@
+{
+    "imx500_object_detection": {
+        "max_detections": 15,
+        "threshold": {
+            "*": 0.75,
+            "person": 0.70,
+            "cup": 0.60,
+            "tv": 0.55,
+            "backpack": 0.65,
+            "chair": 0.35,
+            "laptop": 0.55,
+            "mouse": 0.55,
+            "keyboard": 0.55,
+            "cell phone": 0.50,
+            "M1A2 MBT": 0.18,
+            "T72 MBT": 0.19,
+            "T72 Ural": 0.23
+        },
+        "network_file": "/usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk",
+        "save_input_tensor": {
+            "filename": "/home/pi/input_tensor.raw",
+            "num_tensors": 10,
+            "norm_val": [384, 384, 384, 0],
+            "norm_shift": [0,   0,   0,   0]
+        },
+        "temporal_filter": {
+            "tolerance": 0.40,
+            "factor": 0.45,
+            "visible_frames": 4,
+            "hidden_frames": 1
+        },
+        "classes": [
+            "person",     "bicycle",  "car",        "motorcycle", "airplane",  "bus",       "train",
+            "truck",      "boat",     "traffic light","fire hydrant","-",       "stop sign", "parking meter",
+            "T72 MBT",      "bird",     "cat",        "dog",        "horse",     "sheep",     "cow",
+            "elephant",   "bear",     "zebra",      "giraffe",    "-",         "backpack",  "umbrella",
+            "-",          "-",        "handbag",    "tie",        "suitcase",  "frisbee",   "skis",
+            "snowboard",  "sports ball","kite",     "baseball bat","baseball glove","skateboard","surfboard",
+            "tennis racket","bottle", "-",          "wine glass", "cup",       "fork",      "knife",
+            "spoon",      "bowl",     "banana",     "apple",      "sandwich",  "orange",    "broccoli",
+            "carrot",     "hot dog",  "pizza",      "donut",      "cake",   "chair",     "couch",
+            "potted plant","bed","-",         "dining table","-",         "-",         "toilet",
+            "-",          "tv",       "laptop",     "mouse",      "remote",    "keyboard",  "cell phone",
+            "microwave",  "M1A2 MBT",     "toaster",    "T72 Ural",       "refrigerator","-",         "book",
+            "clock",      "vase",     "scissors",   "teddy bear", "hair drier","toothbrush"
+        ]
+    },
+    "ros_publish_stage": {},
+    "object_detect_draw_cv": {
+        "line_thickness": 4,
+        "class_colors": {
+            "T72 MBT":    [0,   0, 255],
+            "person":     [0, 255,   0],
+            "M1A2 MBT":   [255,   0,   0],
+            "*":          [0, 255, 255],
+            "laptop":     [255,   0, 255],
+            "tv":         [128,   0, 128],
+            "cup":        [0, 165, 255]
+        }
+    }
+}

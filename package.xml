@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>hailo_detector</name>
+  <version>0.1.0</version>
+  <description>
+    ROS 2 Jazzy package for Hailo-accelerated object detection on Raspberry Pi.
+    A C++ node wraps the rpicam-apps / Hailo YOLOv6 post-processing pipeline and
+    publishes detection results as vision_msgs/Detection2DArray.  A Python Tkinter
+    GUI node subscribes to that topic and visualises the live detections.
+  </description>
+  <maintainer email="todo@example.com">Your Name</maintainer>
+  <license>BSD-2-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- C++ node dependencies -->
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>vision_msgs</depend>
+
+  <!-- Python GUI node dependencies -->
+  <depend>rclpy</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
