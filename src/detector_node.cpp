@@ -8,23 +8,34 @@
  *
  * ROS 2 Parameters
  * ────────────────
- *   post_process_file    (string)  Path to the Hailo post-processing JSON.
- *                                  Required — node will not start without it.
- *   image_width          (int)     Lores stream width  [default: 640]
- *   image_height         (int)     Lores stream height [default: 640]
- *   topic                (string)  Output topic name   [default: "detections"]
- *   frame_id             (string)  TF frame in headers [default: "camera"]
- *   confidence_threshold (double)  Detections below this score are dropped
- *                                  before publishing   [default: 0.0]
- *   enable_preview       (bool)    Open a camera preview window
- *                                                      [default: false]
+ *   post_process_file         (string)  Path to the Hailo post-processing JSON.
+ *                                       Required — node will not start without it.
+ *   image_width               (int)     Lores stream width  [default: 640]
+ *   image_height              (int)     Lores stream height [default: 640]
+ *   topic                     (string)  Output topic name   [default: "detections"]
+ *   frame_id                  (string)  TF frame in headers [default: "camera"]
+ *   confidence_threshold      (double)  Detections below this score are dropped
+ *                                       before publishing   [default: 0.0]
+ *   enable_preview            (bool)    Open a camera preview window
+ *                                                           [default: false]
+ *   publish_annotated_image   (bool)    Publish BGR8 annotated frames
+ *                                                           [default: false]
+ *   annotated_image_topic     (string)  Topic for sensor_msgs/Image
+ *                                                           [default: "annotated_image"]
+ *   publish_compressed_image  (bool)    Publish JPEG/PNG compressed frames
+ *                                                           [default: false]
+ *   compressed_image_topic    (string)  Topic for sensor_msgs/CompressedImage
+ *                                                           [default: "annotated_image/compressed"]
+ *   compressed_format         (string)  "jpeg" or "png"    [default: "jpeg"]
+ *   jpeg_quality              (int)     JPEG quality 0-100; ignored for PNG
+ *                                                           [default: 90]
  *
  * Message layout (vision_msgs/Detection2DArray)
  * ─────────────────────────────────────────────
- *   header.stamp            — rclcpp::Node::now() at publish time
- *   header.frame_id         — frame_id parameter
- *   detections[i].bbox.center.x/y — centroid in pixels
- *   detections[i].bbox.size_x/y   — bounding-box width / height in pixels
+ *   header.stamp                              — rclcpp::Node::now() at publish time
+ *   header.frame_id                           — frame_id parameter
+ *   detections[i].bbox.center.position.x/y   — centroid in pixels
+ *   detections[i].bbox.size_x/y              — bounding-box width / height in pixels
  *   detections[i].results[0].hypothesis.class_id — class label string
  *   detections[i].results[0].hypothesis.score    — confidence [0, 1]
  */

@@ -4,24 +4,22 @@ ROS 2 Jazzy package for real-time object detection using a Hailo accelerator on
 Raspberry Pi.  A C++ node drives the **rpicam-apps / Hailo YOLOv6**
 post-processing pipeline and publishes results as
 `vision_msgs/Detection2DArray`.  Optionally it also publishes annotated camera
-frames — raw (`sensor_msgs/Image`) and/or compressed (`sensor_msgs/CompressedImage`) —
-with bounding boxes, centroids, and confidence labels drawn on each frame.
-A Python **Tkinter GUI** node subscribes to the detection topic and displays
-detections live.
+frames as raw or compressed images.  A Python **Tkinter GUI** node subscribes to
+the detection topic and displays results live.
 
+https://github.com/westpoint-robotics/hailo_detector.git
 ```
-┌──────────────────────────────────┐        ┌──────────────────────────────┐
-│  detector_node  (C++)            │        │  detection_gui_node  (Python) │
-│                                  │        │                               │
-│  rpicam-apps + Hailo             │──────▶│  Tkinter GUI                  │
-│  YOLOv6 pipeline                 │  det.  │  • Latest message panel       │
-│                                  │  topic │  • Scrollable message log     │
-│  Publishes:                      │        │  • Click-to-detail window     │
-│  • vision_msgs/Detection2DArray  │        └──────────────────────────────┘
-│  • sensor_msgs/Image        (opt)│
-│  • sensor_msgs/CompressedImage   │
-│                         (opt)    │
-└──────────────────────────────────┘
+┌─────────────────────────────┐        ┌──────────────────────────────┐
+│  detector_node  (C++)       │        │  detection_gui_node  (Python) │
+│                             │        │                               │
+│  rpicam-apps + Hailo        │        │  Tkinter GUI                  │
+│  YOLOv6 pipeline            │──────▶│  • Latest message panel       │
+│                             │  ROS 2 │  • Scrollable message log     │
+│  Publishes:                 │  topic │  • Click-to-detail window     │
+│  • Detection2DArray         │        │                               │
+│  • Image (optional)         │        └──────────────────────────────┘
+│  • CompressedImage (opt.)   │
+└─────────────────────────────┘
 ```
 
 ---
@@ -32,13 +30,16 @@ detections live.
 |---|---|
 | ROS 2 Jazzy | `source /opt/ros/jazzy/setup.bash` |
 | `vision_msgs` | `sudo apt install ros-jazzy-vision-msgs` |
-| `sensor_msgs` | included with ROS 2 base |
-| `cv_bridge` | `sudo apt install ros-jazzy-cv-bridge` |
-| OpenCV | `sudo apt install libopencv-dev` |
+| `sensor_msgs` | Included with ROS 2 Jazzy base install |
+| OpenCV | Used for frame decoding, annotation, and compression |
 | rpicam-apps | Headers at `/usr/local/include/rpicam-apps`, lib at `/usr/local/lib/aarch64-linux-gnu/librpicam_app.so` |
 | libcamera | Detected via `pkg-config libcamera` |
 | Hailo Runtime | Post-process JSON at `/usr/share/rpi-camera-assets/` |
-| Python 3 + tkinter | `sudo apt install python3-tk` |
+| Python 3 + tkinter | `sudo apt install python3-tk` (for GUI node) |
+
+> **Note:** A `COLCON_IGNORE` file is present at the package root. This prevents
+> accidental builds on non-Raspberry Pi machines. Use `--packages-select` to
+> build explicitly.
 
 ---
 
@@ -82,43 +83,23 @@ ros2 launch hailo_detector detector.launch.py \
     post_process_file:=/usr/share/rpi-camera-assets/hailo_yolov6_inference.json
 ```
 
-To suppress the GUI (headless / logging only):
-
-```bash
-ros2 launch hailo_detector detector.launch.py gui:=false
-```
-
-### Annotated image output
-
-Enable the raw annotated image topic:
+Enable the GUI:
 
 ```bash
 ros2 launch hailo_detector detector.launch.py \
-    publish_annotated_image:=true
+    post_process_file:=/usr/share/rpi-camera-assets/hailo_yolov6_inference.json \
+    gui:=true
 ```
 
-Enable compressed output only (lower bandwidth):
+Enable annotated image streaming:
 
 ```bash
 ros2 launch hailo_detector detector.launch.py \
-    publish_compressed_image:=true \
-    jpeg_quality:=75
-```
-
-Enable both simultaneously:
-
-```bash
-ros2 launch hailo_detector detector.launch.py \
+    post_process_file:=/usr/share/rpi-camera-assets/hailo_yolov6_inference.json \
     publish_annotated_image:=true \
-    publish_compressed_image:=true
-```
-
-View the annotated stream with:
-
-```bash
-rqt_image_view /annotated_image
-# or for compressed:
-rqt_image_view /annotated_image/compressed
+    publish_compressed_image:=true \
+    compressed_format:=jpeg \
+    jpeg_quality:=80
 ```
 
 ### Run nodes individually
@@ -148,59 +129,49 @@ ros2 run hailo_detector detector_node --ros-args \
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `post_process_file` | string | `"/usr/share/rpi-camera-assets/hailo_yolov6_inference.json"` | Path to Hailo post-processing JSON. |
+| `post_process_file` | string | `"/usr/share/rpi-camera-assets/hailo_yolov6_inference.json"` | **Required.** Path to Hailo post-processing JSON. Node exits fatally if empty. |
 | `image_width` | int | `640` | Lores stream width fed to the inference engine. |
 | `image_height` | int | `640` | Lores stream height fed to the inference engine. |
 | `topic` | string | `"detections"` | Topic on which `Detection2DArray` is published. |
 | `frame_id` | string | `"camera"` | TF coordinate frame written into message headers. |
-| `confidence_threshold` | double | `0.0` | Detections below this confidence are dropped before publishing or drawing. |
+| `confidence_threshold` | double | `0.0` | Detections below this confidence are dropped before publishing. |
 | `enable_preview` | bool | `false` | Open an rpicam preview window. |
-| `publish_annotated_image` | bool | `false` | Publish a `sensor_msgs/Image` with annotations drawn on every frame. |
-| `annotated_image_topic` | string | `"annotated_image"` | Topic for the raw annotated image. |
-| `publish_compressed_image` | bool | `false` | Publish a `sensor_msgs/CompressedImage` with annotations drawn on every frame. |
-| `compressed_image_topic` | string | `"annotated_image/compressed"` | Topic for the compressed annotated image. |
-| `compressed_format` | string | `"jpeg"` | Compression codec: `"jpeg"` or `"png"`. |
-| `jpeg_quality` | int | `90` | JPEG quality (0–100). Ignored when `compressed_format` is `"png"`. |
+| `publish_annotated_image` | bool | `false` | Publish BGR8 raw annotated frames on `annotated_image_topic`. |
+| `annotated_image_topic` | string | `"annotated_image"` | Topic for `sensor_msgs/Image` (BGR8). |
+| `publish_compressed_image` | bool | `false` | Publish JPEG/PNG compressed annotated frames on `compressed_image_topic`. |
+| `compressed_image_topic` | string | `"annotated_image/compressed"` | Topic for `sensor_msgs/CompressedImage`. |
+| `compressed_format` | string | `"jpeg"` | Compression format: `"jpeg"` or `"png"`. |
+| `jpeg_quality` | int | `90` | JPEG quality 0–100; ignored when `compressed_format` is `"png"`. |
 
 ### `detection_gui_node` (Python)
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `topic` | string | `"detections"` | Topic to subscribe to. Must match the detector. |
+| `topic` | string | `"detections"` | Topic to subscribe to. Must match the detector's `topic` parameter. |
 
 ---
 
-## Published topics
+## Topics
 
-| Topic | Type | Description |
-|---|---|---|
-| `/detections` *(configurable)* | `vision_msgs/Detection2DArray` | One message per frame containing at least one detection above the confidence threshold. |
-| `/annotated_image` *(configurable)* | `sensor_msgs/Image` | Every camera frame with bounding boxes, centroids, and confidence labels drawn. Published only when `publish_annotated_image` is `true`. |
-| `/annotated_image/compressed` *(configurable)* | `sensor_msgs/CompressedImage` | Same annotated frame compressed as JPEG or PNG. Published only when `publish_compressed_image` is `true`. |
+| Topic | Type | Direction | Notes |
+|---|---|---|---|
+| `/detections` *(configurable)* | `vision_msgs/Detection2DArray` | Published | One message per frame with at least one detection above the confidence threshold. |
+| `/annotated_image` *(configurable)* | `sensor_msgs/Image` | Published | BGR8 raw frame with bounding boxes drawn. Only when `publish_annotated_image:=true`. |
+| `/annotated_image/compressed` *(configurable)* | `sensor_msgs/CompressedImage` | Published | JPEG or PNG compressed annotated frame. Only when `publish_compressed_image:=true`. |
+| `/detections` *(configurable)* | `vision_msgs/Detection2DArray` | Subscribed (`detection_gui_node`) | Must match the detector's `topic` parameter. |
 
-> When both image topics are enabled the annotated frame is built only once per
-> camera tick and shared between publishers.
+All publishers use a queue depth of 10.
 
 ### Detection2DArray field mapping
 
-| Field | Source |
+| `Detection2DArray` field | Source |
 |---|---|
 | `header.stamp` | `rclcpp::Node::now()` at publish time |
 | `header.frame_id` | `frame_id` parameter |
-| `detections[i].bbox.center.x/y` | Centroid of the rpicam-apps bounding box (pixels) |
-| `detections[i].bbox.size_x/y` | Bounding-box width / height (pixels) |
+| `detections[i].bbox.center.position.x/y` | Centroid of the bounding box in pixels (`box.x + width/2`, `box.y + height/2`) |
+| `detections[i].bbox.size_x/y` | Bounding-box width / height in pixels |
 | `detections[i].results[0].hypothesis.class_id` | Class label string (e.g. `"person"`) |
 | `detections[i].results[0].hypothesis.score` | Confidence in [0, 1] |
-
-### Annotated image overlay
-
-Each detection drawn on the frame consists of:
-
-- **Green rectangle** — bounding box
-- **Red filled circle** — centroid
-- **Label** — `"<class> <confidence>%"` in white on a black background, placed above the box
-
-Only detections that pass `confidence_threshold` are drawn.
 
 ---
 
@@ -222,17 +193,32 @@ The Tkinter GUI window has three sections:
 ## Inspecting topics from the command line
 
 ```bash
-# Detection messages
+# Print detection messages as they arrive
 ros2 topic echo /detections
+
+# Check publish rate
 ros2 topic hz /detections
 
-# Annotated image bandwidth
-ros2 topic hz /annotated_image
-ros2 topic hz /annotated_image/compressed
+# View raw annotated frames (requires rqt or similar)
+ros2 run rqt_image_view rqt_image_view /annotated_image
 
-# One-shot type info
+# One-shot topic info
 ros2 topic info /detections
 ```
+
+---
+
+## Design notes
+
+- **Threading model:** `main()` starts a dedicated `std::thread` for
+  `rclcpp::spin()`, keeping ROS 2 parameter services alive while the blocking
+  `run_camera_loop()` occupies the main thread.
+- **Silent frames:** The detector only publishes a `Detection2DArray` when at
+  least one detection passes the confidence threshold. Frames with no qualifying
+  detections produce no topic traffic.
+- **Annotated images are independent of detections:** The image publishing path
+  fires on every frame and draws only the detections that pass the threshold.
+  If no detections pass, a plain (unannotated) frame is still published.
 
 ---
 
